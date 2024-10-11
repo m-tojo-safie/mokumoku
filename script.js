@@ -5,6 +5,7 @@ let currentStrokeStyle = "#FF0000";
 let currentFillStyle = "#00FF00";
 let currentLineWidth = 1;
 let editTarget = null;
+let editPointIdx = null;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -82,6 +83,7 @@ const clearAll = () => {
   polygons = [];
   tmpPositions = [];
   clearCanvas();
+  document.getElementById("polygon-list").innerHTML = "";
 };
 
 const clearCanvas = () => {
@@ -157,13 +159,26 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-document.addEventListener("mouseup", (e) => {
+document.addEventListener("mousedown", (e) => {
   const position = calculatePositionFromEvent(e);
   if (position === null) {
     return;
   }
   const x = position.x;
   const y = position.y;
+  // 編集モード、後続処理はSKIP
+  if (editTarget) {
+    // 各ポイントの近くをクリックしたかどうか
+    const polygon = polygons.find((polygon) => polygon.id == editTarget);
+    for (let i = 0; i < polygon.points.length; i++) {
+      const point = polygon.points[i];
+      if (Math.abs(point.x - x) < 5 && Math.abs(point.y - y) < 5) {
+        editPointIdx = i; // インデックスを代入
+        return;
+      }
+    }
+    return;
+  }
   // 開始点と近くなったらポリゴンを作成
   if (
     tmpPositions.length > 2 &&
@@ -190,20 +205,20 @@ document.addEventListener("mouseup", (e) => {
     const listItem = document.createElement("li");
     listItem.classList.add("list-group-item");
     listItem.innerHTML = `Polygon ${polygonId}
-              <button
-                class="btn btn-primary ms-2"
-                onClick="editPolygon(event)"
-                data-polygon-id="${polygonId}"
-              >
-                編集</button
-              ><button
-                class="btn btn-danger ms-2"
-                data-polygon-id="${polygonId}"
-                onClick="deletePolygon(event)"
-              >
-                削除
-              </button>
-            </li>`;
+                <button
+                  class="btn btn-primary ms-2"
+                  onClick="editPolygon(event)"
+                  data-polygon-id="${polygonId}"
+                >
+                  編集</button
+                ><button
+                  class="btn btn-danger ms-2"
+                  data-polygon-id="${polygonId}"
+                  onClick="deletePolygon(event)"
+                >
+                  削除
+                </button>
+              </li>`;
     document.getElementById("polygon-list").appendChild(listItem);
     tmpPositions = [];
     draw();
@@ -220,6 +235,12 @@ document.addEventListener("mousemove", (e) => {
   }
   const x = position.x;
   const y = position.y;
+  // 編集モードの場合はポイントを移動
+  if (editPointIdx !== null && editTarget) {
+    const polygon = polygons.find((polygon) => polygon.id == editTarget);
+    polygon.points[editPointIdx] = { x: x, y: y };
+    draw();
+  }
   draw();
   // マウスの位置までのラインを描画
   if (tmpPositions.length > 0) {
@@ -232,5 +253,13 @@ document.addEventListener("mousemove", (e) => {
     ctx.lineWidth = currentLineWidth;
     ctx.strokeStyle = currentStrokeStyle;
     ctx.stroke();
+  }
+});
+
+document.addEventListener("mouseup", (e) => {
+  // ポイントの移動を終了
+  if (editPointIdx !== null) {
+    editPointIdx = null;
+    draw();
   }
 });
