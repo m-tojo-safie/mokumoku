@@ -91,7 +91,6 @@ const clearCanvas = () => {
 };
 
 const setStrokeStyle = (color) => {
-  console.log(color);
   currentStrokeStyle = color;
 };
 
@@ -217,8 +216,7 @@ document.addEventListener("mousedown", (e) => {
                   onClick="deletePolygon(event)"
                 >
                   削除
-                </button>
-              </li>`;
+                </button>`;
     document.getElementById("polygon-list").appendChild(listItem);
     tmpPositions = [];
     draw();
