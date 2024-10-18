@@ -108,9 +108,7 @@ const deletePolygon = (event) => {
   targetPolygonIdx = polygons.findIndex((polygon) => polygon.id == polygonId);
   polygons.splice(targetPolygonIdx, 1);
   // リスト削除
-  document
-    .querySelector(`button[data-polygon-id="${polygonId}"]`)
-    .parentNode.remove();
+  document.getElementById(`polygon-${polygonId}`).parentNode.remove();
   draw();
 };
 
@@ -124,6 +122,47 @@ const editPolygon = (event) => {
   }
   // 編集モードに切り替え
   editTarget = polygonId;
+  draw();
+};
+
+const reoderPolygon = (event, direction) => {
+  if (direction != "up" && direction != "down") {
+    return;
+  }
+  const polygonId = event.target.getAttribute("data-polygon-id");
+  const targetPolygonIdx = polygons.findIndex(
+    (polygon) => polygon.id == polygonId
+  );
+  const targetPolygon = polygons[targetPolygonIdx];
+  if (direction == "up" && targetPolygonIdx > 0) {
+    polygons[targetPolygonIdx] = polygons[targetPolygonIdx - 1];
+    polygons[targetPolygonIdx - 1] = targetPolygon;
+    // リストの順番を変更
+    const list = document.getElementById("polygon-list");
+    const items = list.getElementsByTagName("li");
+
+    if (targetPolygonIdx > 0 && targetPolygonIdx < items.length) {
+      const currentItem = items[targetPolygonIdx];
+      const previousItem = items[targetPolygonIdx - 1];
+
+      // リストから現在のアイテムを削除し、前に追加
+      list.insertBefore(currentItem, previousItem);
+    }
+  } else if (direction == "down" && targetPolygonIdx < polygons.length - 1) {
+    polygons[targetPolygonIdx] = polygons[targetPolygonIdx + 1];
+    polygons[targetPolygonIdx + 1] = targetPolygon;
+    // リストの順番を変更
+    const list = document.getElementById("polygon-list");
+    const items = list.getElementsByTagName("li");
+
+    if (targetPolygonIdx >= 0 && targetPolygonIdx < items.length - 1) {
+      const currentItem = items[targetPolygonIdx];
+      const nextItem = items[targetPolygonIdx + 1];
+
+      // リストから現在のアイテムを削除し、後ろに追加
+      list.insertBefore(nextItem, currentItem);
+    }
+  }
   draw();
 };
 
@@ -203,20 +242,40 @@ document.addEventListener("mousedown", (e) => {
     // リスト生成
     const listItem = document.createElement("li");
     listItem.classList.add("list-group-item");
-    listItem.innerHTML = `Polygon ${polygonId}
-                <button
-                  class="btn btn-primary ms-2"
-                  onClick="editPolygon(event)"
-                  data-polygon-id="${polygonId}"
-                >
-                  編集</button
-                ><button
-                  class="btn btn-danger ms-2"
-                  data-polygon-id="${polygonId}"
-                  onClick="deletePolygon(event)"
-                >
-                  削除
-                </button>`;
+    listItem.innerHTML = `<div class="d-flex flex-row justify-content-between" id="polygon-${polygonId}">
+                <div>
+                  Polygon ${polygonId}
+                  <button
+                    class="btn btn-primary ms-2"
+                    onClick="editPolygon(event)"
+                    data-polygon-id="${polygonId}"
+                  >
+                    編集</button
+                  ><button
+                    class="btn btn-danger ms-2"
+                    data-polygon-id="${polygonId}"
+                    onClick="deletePolygon(event)"
+                  >
+                    削除
+                  </button>
+                </div>
+                <div>
+                  <button
+                    class="btn btn-secondary"
+                    onClick="reoderPolygon(event, 'up')"
+                    data-polygon-id="${polygonId}"
+                  >
+                    ⬆️
+                  </button>
+                  <button
+                    class="btn btn-secondary"
+                    onClick="reoderPolygon(event, 'down')"
+                    data-polygon-id="${polygonId}"
+                  >
+                    ⬇️
+                  </button>
+                </div>
+              </div>`;
     document.getElementById("polygon-list").appendChild(listItem);
     tmpPositions = [];
     draw();
